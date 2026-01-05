@@ -359,14 +359,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👤 Author
 
-**Your Name** - 2nd Year BCA Student, BBD University  
-*Cybersecurity & Forensics Specialization*
+**Shivansh Mishra** - 2nd Year B.Tech Student, BBD University  
+*Cloud computing and Machine Learning*
 
-- 📧 Email: your.email@example.com
-- 🔗 GitHub: [@your-username](https://github.com/your-username)
-- 💼 LinkedIn: [Your Profile](https://linkedin.com/in/your-profile)
-
----
 
 ## 🙏 Acknowledgments
 
@@ -378,24 +373,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📞 Support & Feedback
 
-### Getting Help
-
-1. **Check the docs** - Review [docs/](docs/) folder
-2. **Check logs** - Review `backup/app.log` for errors
-3. **GitHub Issues** - Report bugs or request features
-4. **Email** - Reach out directly
-
-### Report a Bug
-
-Create an issue with:
-- Description of the problem
-- Steps to reproduce
-- Expected vs actual behavior
-- Screenshots/logs if applicable
-
----
 
 ## ⭐ Status
 
@@ -430,7 +408,7 @@ Create an issue with:
 
 <div align="center">
 
-### Made with ❤️ by a passionate BCA student
+### Made with ❤️ by a passionate B.Tech student
 
 **Happy Coding!** 🚀
 
