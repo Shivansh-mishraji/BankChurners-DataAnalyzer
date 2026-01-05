@@ -1,0 +1,13 @@
+2026-01-05 15:58:19,899 - INFO - ================================================================================
+2026-01-05 15:58:19,899 - INFO - Application started
+2026-01-05 15:58:19,900 - INFO - ================================================================================
+2026-01-05 15:58:19,900 - ERROR - Data file not found: data\bank_churners_large_dataset.csv
+2026-01-05 15:58:19,900 - ERROR - File not found: Data file not found: data\bank_churners_large_dataset.csv
+2026-01-05 16:00:08,744 - INFO - ================================================================================
+2026-01-05 16:00:08,744 - INFO - Application started
+2026-01-05 16:00:08,745 - INFO - ================================================================================
+2026-01-05 16:00:08,798 - INFO - Successfully loaded 10000 records from dataset.csv
+2026-01-05 16:00:08,799 - INFO - DataAnalyzer initialized
+2026-01-05 16:00:21,413 - INFO - Displayed 10000 records
+2026-01-05 16:00:46,304 - INFO - Displayed data summary
+2026-01-05 16:01:54,990 - ERROR - MySQL export error: No module named 'pymysql'
