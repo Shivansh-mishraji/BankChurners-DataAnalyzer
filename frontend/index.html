@@ -59,6 +59,10 @@
         <i data-lucide="trending-down"></i>
         <span>Churn Analysis</span>
       </button>
+      <button class="nav-item" data-page="insights" id="nav-insights" onclick="navigate('insights')">
+        <i data-lucide="cpu"></i>
+        <span>Model Insights</span>
+      </button>
     </nav>
 
     <div class="sidebar-footer">
@@ -366,13 +370,50 @@
               <tr>
                 <th>Segment</th>
                 <th>Total</th>
-                <th>Churned</th>
-                <th>Churn Rate</th>
-                <th>Risk</th>
+                <th>High Risk</th>
+                <th>Risk Rate</th>
+                <th>Risk Level</th>
               </tr>
             </thead>
             <tbody id="churn-tbody"></tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ PAGE: Model Insights ═══════════════════════════════════════════ -->
+    <section id="page-insights" class="page">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">ML Model Insights</h2>
+          <p class="page-subtitle">Random Forest feature importance and accuracy metrics</p>
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="ml-metrics-grid">
+        <div class="kpi-card glass-card skeleton" id="ml-kpi-acc">
+          <div class="kpi-icon-box" style="--c: #10b981"><i data-lucide="check-circle"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="ml-acc-val">—</div>
+            <div class="kpi-label">Test Accuracy</div>
+          </div>
+        </div>
+        <div class="kpi-card glass-card skeleton" id="ml-kpi-status">
+          <div class="kpi-icon-box" style="--c: #3b82f6"><i data-lucide="activity"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="ml-status-val">Active</div>
+            <div class="kpi-label">Model Status</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-row" style="margin-top:24px">
+        <div class="chart-card glass-card wide">
+          <div class="chart-card-header">
+            <h3>Feature Importances</h3>
+            <span class="chart-badge">Bar</span>
+          </div>
+          <div class="chart-wrapper tall"><canvas id="chart-feature-imp"></canvas></div>
         </div>
       </div>
     </section>
@@ -387,7 +428,16 @@
       <h2 id="modal-heading"><i data-lucide="user-plus"></i> Add New Customer</h2>
       <button class="modal-close" onclick="closeAddModal()"><i data-lucide="x"></i></button>
     </div>
-    <form id="add-form" onsubmit="submitRecord(event)" class="add-form">
+    
+    <div class="ml-score-card hidden" id="ml-prediction-box">
+      <div class="ml-score-text">
+        <strong>Live Churn Prediction</strong>
+        <span id="ml-prediction-desc">Evaluating customer features in real-time...</span>
+      </div>
+      <div class="ml-score-value" id="ml-prediction-val">--%</div>
+    </div>
+
+    <form id="add-form" onsubmit="submitRecord(event)" oninput="debouncedPredict()" class="add-form">
       <div class="form-grid">
         <div class="form-group">
           <label for="f-clientID">Client ID</label>

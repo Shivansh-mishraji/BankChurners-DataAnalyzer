@@ -4,6 +4,7 @@ const PALETTE = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#e
 let charts = {};
 let tableState = {page:1,pageSize:50,sort:'',dir:'asc'};
 let filterTimeout;
+let predictTimeout;
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   loadColumnAnalytics();
   loadScatter();
   loadChurnAnalysis();
+  loadModelInsights();
   document.getElementById('filter-search').addEventListener('input', ()=>{
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(loadTable, 400);
@@ -46,6 +48,7 @@ function navigate(page){
   document.getElementById('nav-'+page).classList.add('active');
   if(page==='analytics'){loadColumnAnalytics();loadScatter();}
   if(page==='churn'){loadChurnAnalysis();}
+  if(page==='insights'){loadModelInsights();}
   document.getElementById('sidebar').classList.remove('open');
 }
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); }
@@ -291,9 +294,68 @@ async function loadChurnAnalysis(){
   } catch{ toast('Failed to load churn data','error'); }
 }
 
+// ── ML Insights & Prediction ──────────────────────────────────────────────────
+async function loadModelInsights(){
+  try {
+    const d = await get('/model/metrics');
+    setText('ml-acc-val', (d.metrics.accuracy * 100).toFixed(1) + '%');
+    setText('ml-status-val', d.status.charAt(0).toUpperCase() + d.status.slice(1));
+    document.querySelectorAll('#ml-metrics-grid .skeleton').forEach(el=>el.classList.remove('skeleton'));
+    
+    // Feature importances
+    const labels = d.feature_importances.map(f=>f.feature.replace(/_/g,' '));
+    const vals = d.feature_importances.map(f=>f.importance);
+    destroyChart('chart-feature-imp');
+    const ctx = document.getElementById('chart-feature-imp').getContext('2d');
+    charts['chart-feature-imp'] = new Chart(ctx,{
+      type:'bar',
+      data:{labels, datasets:[{data:vals, backgroundColor:'rgba(139,92,246,0.6)', borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{color:'#94a3b8',maxRotation:45,minRotation:45},grid:{display:false}},
+          y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'}}
+        }
+      }
+    });
+  } catch(e){ console.log(e); }
+}
+
+function debouncedPredict(){
+  clearTimeout(predictTimeout);
+  predictTimeout = setTimeout(livePredict, 500);
+}
+
+async function livePredict(){
+  const box = document.getElementById('ml-prediction-box');
+  if(!v('f-clientID')) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  document.getElementById('ml-prediction-val').textContent = '...';
+  try {
+    const body = {
+      clientID: v('f-clientID') || 'temp', Type: v('f-type'), age: num('f-age'),
+      gender: v('f-gender'), Dependent_count: num('f-dep'),
+      Educational_Level: v('f-education'), Marital_Status: v('f-marital'),
+      Income_Category: v('f-income'), Card_Category: v('f-card'),
+      Months_on_book: num('f-months'), Total_Relationship_count: num('f-rel'),
+      Month_Inactive_12_month: num('f-inactive'), Contacts_count_12_mon: num('f-contacts'),
+      Credit_Limit: num('f-credit'), Total_Revolving_Bal: num('f-rev-bal'),
+      Avg_Open_To_Buy: num('f-otb'), Total_Amt_chng_Q4_Q1: num('f-amt-chng'),
+      Total_Trans_Amt: num('f-trans-amt'), Total_Trans_Ct: num('f-trans-ct'),
+      Total_Ct_Chng_Q4_Q1: num('f-ct-chng'),
+      Average_Utilization_Ratio: num('f-util'), geography: v('f-geo'),
+    };
+    const r = await post('/predict', body);
+    const val = document.getElementById('ml-prediction-val');
+    val.textContent = (r.churn_probability * 100).toFixed(1) + '%';
+    val.style.color = r.risk_level === 'High' ? 'var(--red)' : (r.risk_level === 'Medium' ? 'var(--amber)' : 'var(--green)');
+    document.getElementById('ml-prediction-desc').textContent = 'Risk Level: ' + r.risk_level;
+  } catch{}
+}
+
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 function openAddModal(){ document.getElementById('add-modal').classList.remove('hidden'); lucide.createIcons(); }
-function closeAddModal(){ document.getElementById('add-modal').classList.add('hidden'); }
+function closeAddModal(){ document.getElementById('add-modal').classList.add('hidden'); document.getElementById('ml-prediction-box').classList.add('hidden'); }
 function closeModalOnOverlay(e){ if(e.target===e.currentTarget) closeAddModal(); }
 
 async function submitRecord(e){

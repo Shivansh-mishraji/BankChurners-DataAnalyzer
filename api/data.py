@@ -16,6 +16,7 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+import joblib
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,23 @@ def _get_df() -> pd.DataFrame:
 def _df_to_records(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """Convert DataFrame to JSON-safe records."""
     return json.loads(df.to_json(orient="records"))
+
+
+# ── Load ML Model ─────────────────────────────────────────────────────────────
+MODEL_PATH = _ROOT / "ml" / "churn_model.pkl"
+_ml_artifact = None
+
+def _get_ml_artifact():
+    global _ml_artifact
+    if _ml_artifact is None:
+        if MODEL_PATH.exists():
+            try:
+                _ml_artifact = joblib.load(MODEL_PATH)
+                logger.info("Loaded ML model from %s", MODEL_PATH)
+            except Exception as e:
+                logger.error("Failed to load ML model: %s", e)
+    return _ml_artifact
+
 
 
 # ── Pydantic models ───────────────────────────────────────────────────────────
@@ -312,3 +330,63 @@ async def get_filter_options():
         "education": sorted(df["Educational_Level"].dropna().unique().tolist()) if "Educational_Level" in df.columns else [],
         "marital_status": sorted(df["Marital_Status"].dropna().unique().tolist()) if "Marital_Status" in df.columns else [],
     }
+
+@router.post("/predict")
+async def predict_churn(record: NewRecord):
+    """Predict churn probability for a customer record using ML model."""
+    ml = _get_ml_artifact()
+    if not ml:
+        raise HTTPException(status_code=503, detail="ML model not loaded.")
+        
+    model = ml["model"]
+    encoders = ml["encoders"]
+    features = ml["features"]
+    
+    # Convert incoming record to dict
+    data = record.model_dump()
+    
+    # Encode categorical fields
+    for col, le in encoders.items():
+        if col in data:
+            val = str(data[col])
+            # Handle unseen labels gracefully (assign to class 0 or handle error)
+            if val in le.classes_:
+                data[col] = int(le.transform([val])[0])
+            else:
+                data[col] = 0
+                
+    # Prepare feature vector
+    vec = []
+    for f in features:
+        vec.append(data.get(f, 0))
+        
+    X = [vec]
+    
+    # Predict
+    prob = model.predict_proba(X)[0]
+    # Class 1 is Attrited (churn)
+    churn_prob = float(prob[1])
+    
+    return {
+        "churn_probability": round(churn_prob, 3),
+        "risk_level": "High" if churn_prob > 0.5 else ("Medium" if churn_prob > 0.2 else "Low")
+    }
+
+@router.get("/model/metrics")
+async def get_model_metrics():
+    """Get ML model performance metrics and feature importances."""
+    ml = _get_ml_artifact()
+    if not ml:
+        raise HTTPException(status_code=503, detail="ML model not loaded.")
+    
+    # Sort importances
+    importances = ml.get("importances", {})
+    sorted_importances = [{"feature": k, "importance": round(float(v), 4)} 
+                         for k, v in sorted(importances.items(), key=lambda item: item[1], reverse=True)]
+                         
+    return {
+        "status": "active",
+        "metrics": ml.get("metrics", {}),
+        "feature_importances": sorted_importances[:10] # Top 10
+    }
+
