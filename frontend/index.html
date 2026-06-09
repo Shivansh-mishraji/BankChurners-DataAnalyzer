@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Bank Churner Analytics — Interactive web dashboard for credit card customer data analysis, churn prediction insights, and visualizations." />
+  <title>Bank Churner Analytics | Dashboard</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+
+<!-- ── Animated Background ──────────────────────────────────────────────────── -->
+<div class="bg-gradient" aria-hidden="true">
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+</div>
+
+<!-- ── App Shell ─────────────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+  <aside id="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="sidebar-brand">
+      <div class="brand-icon-box">
+        <i data-lucide="bar-chart-3" class="brand-icon"></i>
+      </div>
+      <div class="brand-text">
+        <h1 class="brand-name">BankChurner</h1>
+        <p class="brand-tagline">Analytics Dashboard</p>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-page="overview" id="nav-overview" onclick="navigate('overview')">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Overview</span>
+      </button>
+      <button class="nav-item" data-page="analytics" id="nav-analytics" onclick="navigate('analytics')">
+        <i data-lucide="pie-chart"></i>
+        <span>Analytics</span>
+      </button>
+      <button class="nav-item" data-page="explorer" id="nav-explorer" onclick="navigate('explorer')">
+        <i data-lucide="table-2"></i>
+        <span>Data Explorer</span>
+      </button>
+      <button class="nav-item" data-page="churn" id="nav-churn" onclick="navigate('churn')">
+        <i data-lucide="trending-down"></i>
+        <span>Churn Analysis</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="server-status" id="server-status">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">Connecting…</span>
+      </div>
+      <div class="export-actions">
+        <button class="btn-export" onclick="exportData('csv')" title="Export CSV">
+          <i data-lucide="download"></i> CSV
+        </button>
+        <button class="btn-export" onclick="exportData('json')" title="Export JSON">
+          <i data-lucide="file-json"></i> JSON
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Mobile Header ──────────────────────────────────────────────────────── -->
+  <header id="mobile-header">
+    <button id="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">
+      <i data-lucide="menu"></i>
+    </button>
+    <div class="mobile-brand">
+      <i data-lucide="bar-chart-3"></i>
+      <span>BankChurner</span>
+    </div>
+    <div class="mobile-status" id="mobile-status-dot"></div>
+  </header>
+
+  <!-- ── Main Content ────────────────────────────────────────────────────────── -->
+  <main id="main-content">
+
+    <!-- ══ PAGE: Overview ════════════════════════════════════════════════════ -->
+    <section id="page-overview" class="page active">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Dashboard Overview</h2>
+          <p class="page-subtitle">10,000 credit card customers · Real-time analytics</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn-refresh" onclick="refreshAll()" title="Refresh data">
+            <i data-lucide="refresh-cw"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card skeleton" id="kpi-total">
+          <div class="kpi-icon-box" style="--c: #3b82f6"><i data-lucide="users"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpi-total-val">—</div>
+            <div class="kpi-label">Total Customers</div>
+          </div>
+          <div class="kpi-trend positive" id="kpi-total-trend"></div>
+        </div>
+        <div class="kpi-card skeleton" id="kpi-churn">
+          <div class="kpi-icon-box" style="--c: #ef4444"><i data-lucide="user-x"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpi-churn-val">—</div>
+            <div class="kpi-label">Churned <span class="kpi-badge" id="kpi-churn-pct"></span></div>
+          </div>
+        </div>
+        <div class="kpi-card skeleton" id="kpi-credit">
+          <div class="kpi-icon-box" style="--c: #10b981"><i data-lucide="credit-card"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpi-credit-val">—</div>
+            <div class="kpi-label">Avg Credit Limit</div>
+          </div>
+        </div>
+        <div class="kpi-card skeleton" id="kpi-util">
+          <div class="kpi-icon-box" style="--c: #f59e0b"><i data-lucide="activity"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpi-util-val">—</div>
+            <div class="kpi-label">Avg Utilization</div>
+          </div>
+        </div>
+        <div class="kpi-card skeleton" id="kpi-age">
+          <div class="kpi-icon-box" style="--c: #8b5cf6"><i data-lucide="calendar"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpi-age-val">—</div>
+            <div class="kpi-label">Avg Customer Age</div>
+          </div>
+        </div>
+        <div class="kpi-card skeleton" id="kpi-trans">
+          <div class="kpi-icon-box" style="--c: #06b6d4"><i data-lucide="dollar-sign"></i></div>
+          <div class="kpi-body">
+            <div class="kpi-value" id="kpi-trans-val">—</div>
+            <div class="kpi-label">Avg Transaction Amt</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overview Charts Row -->
+      <div class="charts-row">
+        <div class="chart-card" id="chart-card-type">
+          <div class="chart-card-header">
+            <h3>Customer Type Split</h3>
+            <span class="chart-badge">Donut</span>
+          </div>
+          <div class="chart-wrapper"><canvas id="chart-type-split"></canvas></div>
+        </div>
+        <div class="chart-card" id="chart-card-gender">
+          <div class="chart-card-header">
+            <h3>Gender Distribution</h3>
+            <span class="chart-badge">Bar</span>
+          </div>
+          <div class="chart-wrapper"><canvas id="chart-gender"></canvas></div>
+        </div>
+        <div class="chart-card" id="chart-card-income">
+          <div class="chart-card-header">
+            <h3>Income Category</h3>
+            <span class="chart-badge">Horizontal Bar</span>
+          </div>
+          <div class="chart-wrapper"><canvas id="chart-income"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Second Charts Row -->
+      <div class="charts-row">
+        <div class="chart-card wide" id="chart-card-geo">
+          <div class="chart-card-header">
+            <h3>Geography Distribution</h3>
+            <span class="chart-badge">Bar</span>
+          </div>
+          <div class="chart-wrapper"><canvas id="chart-geo"></canvas></div>
+        </div>
+        <div class="chart-card wide" id="chart-card-card">
+          <div class="chart-card-header">
+            <h3>Card Category</h3>
+            <span class="chart-badge">Donut</span>
+          </div>
+          <div class="chart-wrapper"><canvas id="chart-card-cat"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ PAGE: Analytics ══════════════════════════════════════════════════ -->
+    <section id="page-analytics" class="page">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Deep Analytics</h2>
+          <p class="page-subtitle">Explore numeric distributions & correlations</p>
+        </div>
+      </div>
+
+      <!-- Column Selector -->
+      <div class="analytics-controls">
+        <div class="control-group">
+          <label for="analytic-col">Select Column</label>
+          <select id="analytic-col" onchange="loadColumnAnalytics()">
+            <option value="Credit_Limit">Credit Limit</option>
+            <option value="Average_Utilization_Ratio">Utilization Ratio</option>
+            <option value="Total_Trans_Amt">Transaction Amount</option>
+            <option value="Total_Trans_Ct">Transaction Count</option>
+            <option value="Total_Revolving_Bal">Revolving Balance</option>
+            <option value="age">Age</option>
+            <option value="Months_on_book">Months on Book</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Stats Cards + Histogram -->
+      <div class="analytics-row">
+        <div class="stats-panel" id="stats-panel">
+          <div class="stat-row skeleton-row"><span>Mean</span><strong id="stat-mean">—</strong></div>
+          <div class="stat-row skeleton-row"><span>Median</span><strong id="stat-median">—</strong></div>
+          <div class="stat-row skeleton-row"><span>Std Dev</span><strong id="stat-std">—</strong></div>
+          <div class="stat-row skeleton-row"><span>Min</span><strong id="stat-min">—</strong></div>
+          <div class="stat-row skeleton-row"><span>Q1 (25%)</span><strong id="stat-q25">—</strong></div>
+          <div class="stat-row skeleton-row"><span>Q3 (75%)</span><strong id="stat-q75">—</strong></div>
+          <div class="stat-row skeleton-row"><span>Max</span><strong id="stat-max">—</strong></div>
+        </div>
+        <div class="chart-card flex-1">
+          <div class="chart-card-header">
+            <h3 id="hist-title">Distribution Histogram</h3>
+            <span class="chart-badge">Histogram</span>
+          </div>
+          <div class="chart-wrapper tall"><canvas id="chart-histogram"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Scatter Plot -->
+      <div class="chart-card" style="margin-top:24px">
+        <div class="chart-card-header">
+          <h3>Scatter Explorer</h3>
+          <div class="scatter-controls">
+            <select id="scatter-x" onchange="loadScatter()">
+              <option value="Credit_Limit">Credit Limit (X)</option>
+              <option value="Total_Trans_Amt">Transaction Amt (X)</option>
+              <option value="age">Age (X)</option>
+              <option value="Average_Utilization_Ratio">Utilization (X)</option>
+            </select>
+            <select id="scatter-y" onchange="loadScatter()">
+              <option value="Average_Utilization_Ratio">Utilization (Y)</option>
+              <option value="Total_Trans_Amt">Transaction Amt (Y)</option>
+              <option value="Total_Trans_Ct">Trans Count (Y)</option>
+              <option value="Total_Revolving_Bal">Revolving Bal (Y)</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-wrapper tall"><canvas id="chart-scatter"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ══ PAGE: Data Explorer ══════════════════════════════════════════════ -->
+    <section id="page-explorer" class="page">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Data Explorer</h2>
+          <p class="page-subtitle">Browse, filter, and manage customer records</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn-primary" onclick="openAddModal()">
+            <i data-lucide="plus"></i> Add Record
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters Bar -->
+      <div class="filters-bar" id="filters-bar">
+        <div class="filter-group">
+          <input type="search" id="filter-search" placeholder="Search all fields…" oninput="debouncedLoad()" />
+        </div>
+        <div class="filter-group">
+          <select id="filter-gender" onchange="loadTable()"><option value="">All Genders</option></select>
+        </div>
+        <div class="filter-group">
+          <select id="filter-type" onchange="loadTable()"><option value="">All Types</option></select>
+        </div>
+        <div class="filter-group">
+          <select id="filter-card" onchange="loadTable()"><option value="">All Card Categories</option></select>
+        </div>
+        <div class="filter-group">
+          <select id="filter-income" onchange="loadTable()"><option value="">All Income</option></select>
+        </div>
+        <div class="filter-group">
+          <select id="filter-geo" onchange="loadTable()"><option value="">All Geographies</option></select>
+        </div>
+        <button class="btn-ghost" onclick="clearFilters()"><i data-lucide="x"></i> Clear</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="table-info" id="table-info">Loading…</div>
+          <div class="pagination-controls" id="pagination-controls"></div>
+        </div>
+        <div class="table-scroll">
+          <table id="data-table">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ PAGE: Churn Analysis ═════════════════════════════════════════════ -->
+    <section id="page-churn" class="page">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">Churn Analysis</h2>
+          <p class="page-subtitle">Identify which segments are churning most</p>
+        </div>
+      </div>
+
+      <div class="churn-controls">
+        <div class="control-group">
+          <label for="churn-col">Break churn down by:</label>
+          <select id="churn-col" onchange="loadChurnAnalysis()">
+            <option value="gender">Gender</option>
+            <option value="Card_Category">Card Category</option>
+            <option value="Income_Category">Income Category</option>
+            <option value="Educational_Level">Education Level</option>
+            <option value="Marital_Status">Marital Status</option>
+            <option value="geography">Geography</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Churn bars -->
+      <div class="charts-row" style="margin-top:0">
+        <div class="chart-card" style="flex:1.5">
+          <div class="chart-card-header">
+            <h3>Churn Rate by Segment</h3>
+            <span class="chart-badge">Bar</span>
+          </div>
+          <div class="chart-wrapper tall"><canvas id="chart-churn-rate"></canvas></div>
+        </div>
+        <div class="chart-card" style="flex:1">
+          <div class="chart-card-header">
+            <h3>Volume by Segment</h3>
+            <span class="chart-badge">Donut</span>
+          </div>
+          <div class="chart-wrapper tall"><canvas id="chart-churn-vol"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Churn table -->
+      <div class="table-card" style="margin-top:24px">
+        <div class="table-scroll">
+          <table id="churn-table">
+            <thead>
+              <tr>
+                <th>Segment</th>
+                <th>Total</th>
+                <th>Churned</th>
+                <th>Churn Rate</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+            <tbody id="churn-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── Add Record Modal ─────────────────────────────────────────────────────── -->
+<div id="add-modal" class="modal-overlay hidden" onclick="closeModalOnOverlay(event)">
+  <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+    <div class="modal-header">
+      <h2 id="modal-heading"><i data-lucide="user-plus"></i> Add New Customer</h2>
+      <button class="modal-close" onclick="closeAddModal()"><i data-lucide="x"></i></button>
+    </div>
+    <form id="add-form" onsubmit="submitRecord(event)" class="add-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="f-clientID">Client ID</label>
+          <input type="text" id="f-clientID" required placeholder="e.g. C1234" />
+        </div>
+        <div class="form-group">
+          <label for="f-type">Customer Type</label>
+          <select id="f-type" required>
+            <option value="Existing Customer">Existing Customer</option>
+            <option value="Attrited Customer">Attrited Customer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f-age">Age</label>
+          <input type="number" id="f-age" min="18" max="100" required placeholder="26–80" />
+        </div>
+        <div class="form-group">
+          <label for="f-gender">Gender</label>
+          <select id="f-gender" required>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f-education">Education</label>
+          <select id="f-education" required>
+            <option>High School</option>
+            <option>Graduate</option>
+            <option>Uneducated</option>
+            <option>Post-Graduate</option>
+            <option>Unknown</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f-marital">Marital Status</label>
+          <select id="f-marital" required>
+            <option>Single</option>
+            <option>Married</option>
+            <option>Divorced</option>
+            <option>Unknown</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f-income">Income Category</label>
+          <select id="f-income" required>
+            <option>Less than $40K</option>
+            <option>$40K - $60K</option>
+            <option>$60K - $80K</option>
+            <option>$80K - $120K</option>
+            <option>$120K+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f-card">Card Category</label>
+          <select id="f-card" required>
+            <option>Blue</option>
+            <option>Silver</option>
+            <option>Gold</option>
+            <option>Platinum</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f-credit">Credit Limit ($)</label>
+          <input type="number" id="f-credit" min="1000" max="50000" required placeholder="1000–50000" />
+        </div>
+        <div class="form-group">
+          <label for="f-util">Utilization Ratio (0–1)</label>
+          <input type="number" id="f-util" min="0" max="1" step="0.01" required placeholder="0.00–1.00" />
+        </div>
+        <div class="form-group">
+          <label for="f-trans-amt">Total Trans Amount</label>
+          <input type="number" id="f-trans-amt" min="0" required placeholder="e.g. 4800" />
+        </div>
+        <div class="form-group">
+          <label for="f-trans-ct">Transaction Count</label>
+          <input type="number" id="f-trans-ct" min="0" required placeholder="e.g. 62" />
+        </div>
+        <div class="form-group">
+          <label for="f-months">Months on Book</label>
+          <input type="number" id="f-months" min="0" max="60" required placeholder="12–56" />
+        </div>
+        <div class="form-group">
+          <label for="f-geo">Geography</label>
+          <select id="f-geo" required>
+            <option>USA</option>
+            <option>Canada</option>
+            <option>UK</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f-dep">Dependents</label>
+          <input type="number" id="f-dep" min="0" max="10" required placeholder="0–10" />
+        </div>
+        <div class="form-group">
+          <label for="f-rel">Relationship Count</label>
+          <input type="number" id="f-rel" min="0" max="10" required placeholder="1–6" />
+        </div>
+        <div class="form-group">
+          <label for="f-inactive">Inactive Months (12mo)</label>
+          <input type="number" id="f-inactive" min="0" max="12" required placeholder="0–6" />
+        </div>
+        <div class="form-group">
+          <label for="f-contacts">Contacts (12mo)</label>
+          <input type="number" id="f-contacts" min="0" max="20" required placeholder="0–6" />
+        </div>
+        <div class="form-group">
+          <label for="f-rev-bal">Revolving Balance</label>
+          <input type="number" id="f-rev-bal" min="0" required placeholder="e.g. 1500" />
+        </div>
+        <div class="form-group">
+          <label for="f-otb">Avg Open-to-Buy</label>
+          <input type="number" id="f-otb" min="0" required placeholder="e.g. 8000" />
+        </div>
+        <div class="form-group">
+          <label for="f-amt-chng">Amt Change Q4/Q1</label>
+          <input type="number" id="f-amt-chng" step="0.001" required placeholder="e.g. 0.773" />
+        </div>
+        <div class="form-group">
+          <label for="f-ct-chng">Count Change Q4/Q1</label>
+          <input type="number" id="f-ct-chng" step="0.001" required placeholder="e.g. 0.661" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn-primary" id="submit-btn">
+          <i data-lucide="save"></i> Save Customer
+        </button>
+        <button type="button" class="btn-ghost" onclick="closeAddModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Toast ─────────────────────────────────────────────────────────────────── -->
+<div id="toast-container" aria-live="polite"></div>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>
