@@ -1,5 +1,5 @@
 'use strict';
-const API = 'http://localhost:8000/api/v1';
+const API = '/api/v1';
 const PALETTE = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16'];
 let charts = {};
 let tableState = {page:1,pageSize:50,sort:'',dir:'asc'};
