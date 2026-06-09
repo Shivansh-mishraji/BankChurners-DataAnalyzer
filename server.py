@@ -60,8 +60,8 @@ if STATIC_DIR.exists():
     @app.get("/", include_in_schema=False)
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str = ""):
-        # Don't intercept API routes
-        if full_path.startswith("api"):
+        # Don't intercept API or asset routes
+        if full_path.startswith(("api", "assets")):
             return {"error": "Not found"}
         index = STATIC_DIR / "index.html"
         if index.exists():
