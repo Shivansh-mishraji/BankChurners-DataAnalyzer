@@ -11,4 +11,4 @@ Updated: 2026-07-13
 
 ## Notes
 
-Next step: refactor the authentication module.
+Next: add offline mode support for better rural accessibility.
