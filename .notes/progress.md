@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Updated: 2026-07-13
+Updated: 2026-07-15
 
 ## This Week
 
@@ -11,4 +11,4 @@ Updated: 2026-07-13
 
 ## Notes
 
-Next: add offline mode support for better rural accessibility.
+Reminder: write tests before implementation when possible.
