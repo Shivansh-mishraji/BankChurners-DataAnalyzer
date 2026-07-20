@@ -1,6 +1,6 @@
 # Progress Tracker
 
-Updated: 2026-07-15
+Updated: 2026-07-20
 
 ## This Week
 
@@ -11,4 +11,4 @@ Updated: 2026-07-15
 
 ## Notes
 
-Reminder: write tests before implementation when possible.
+Priority: clean up deprecated code paths in the codebase.
