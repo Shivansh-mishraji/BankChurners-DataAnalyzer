@@ -421,3 +421,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <!-- activity:2026-07-15 --> - Cleaned up unused imports and variables.
 
 <!-- activity:2026-07-20 --> - Logged daily progress and next steps.
+
+<!-- activity:2026-07-25 --> - Updated development notes and technical observations.
